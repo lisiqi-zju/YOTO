@@ -152,8 +152,8 @@ dataset1 = dict(
     type='YTModalDataset',
     dataset=dict(
         type='TDODDataset',
-        data_root='toist_data/images',
-        ann_file='/data/lisq2309/YOTO/toist_data/coco-tasks/annotations/task_1_train.json',
+        data_root='data/data/images',
+        ann_file='/data/lisq2309/YOTO/data/data/coco-tasks/annotations/task_1_train.json',
         data_prefix=dict(img='train2014/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/toist1.json',
@@ -164,8 +164,8 @@ dataset2 = dict(
     type='YTModalDataset',
     dataset=dict(
         type='TDODDataset',
-        data_root='toist_data/images',
-        ann_file='/data/lisq2309/YOTO/toist_data/coco-tasks/annotations/task_2_train.json',
+        data_root='data/data/images',
+        ann_file='/data/lisq2309/YOTO/data/data/coco-tasks/annotations/task_2_train.json',
         data_prefix=dict(img='train2014/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/toist2.json',
@@ -176,8 +176,8 @@ dataset3 = dict(
     type='YTModalDataset',
     dataset=dict(
         type='TDODDataset',
-        data_root='toist_data/images',
-        ann_file='/data/lisq2309/YOTO/toist_data/coco-tasks/annotations/task_3_train.json',
+        data_root='data/data/images',
+        ann_file='/data/lisq2309/YOTO/data/data/coco-tasks/annotations/task_3_train.json',
         data_prefix=dict(img='train2014/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/toist3.json',
@@ -188,8 +188,8 @@ dataset4 = dict(
     type='YTModalDataset',
     dataset=dict(
         type='TDODDataset',
-        data_root='toist_data/images',
-        ann_file='/data/lisq2309/YOTO/toist_data/coco-tasks/annotations/task_4_train.json',
+        data_root='data/data/images',
+        ann_file='/data/lisq2309/YOTO/data/data/coco-tasks/annotations/task_4_train.json',
         data_prefix=dict(img='train2014/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/toist4.json',
@@ -200,8 +200,8 @@ dataset5 = dict(
     type='YTModalDataset',
     dataset=dict(
         type='TDODDataset',
-        data_root='toist_data/images',
-        ann_file='/data/lisq2309/YOTO/toist_data/coco-tasks/annotations/task_5_train.json',
+        data_root='data/data/images',
+        ann_file='/data/lisq2309/YOTO/data/data/coco-tasks/annotations/task_5_train.json',
         data_prefix=dict(img='train2014/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/toist5.json',
@@ -212,8 +212,8 @@ dataset6 = dict(
     type='YTModalDataset',
     dataset=dict(
         type='TDODDataset',
-        data_root='toist_data/images',
-        ann_file='/data/lisq2309/YOTO/toist_data/coco-tasks/annotations/task_6_train.json',
+        data_root='data/data/images',
+        ann_file='/data/lisq2309/YOTO/data/data/coco-tasks/annotations/task_6_train.json',
         data_prefix=dict(img='train2014/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/toist6.json',
@@ -224,8 +224,8 @@ dataset7 = dict(
     type='YTModalDataset',
     dataset=dict(
         type='TDODDataset',
-        data_root='toist_data/images',
-        ann_file='/data/lisq2309/YOTO/toist_data/coco-tasks/annotations/task_7_train.json',
+        data_root='data/data/images',
+        ann_file='/data/lisq2309/YOTO/data/data/coco-tasks/annotations/task_7_train.json',
         data_prefix=dict(img='train2014/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/toist7.json',
@@ -236,8 +236,8 @@ dataset8 = dict(
     type='YTModalDataset',
     dataset=dict(
         type='TDODDataset',
-        data_root='toist_data/images',
-        ann_file='/data/lisq2309/YOTO/toist_data/coco-tasks/annotations/task_8_train.json',
+        data_root='data/data/images',
+        ann_file='/data/lisq2309/YOTO/data/data/coco-tasks/annotations/task_8_train.json',
         data_prefix=dict(img='train2014/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/toist8.json',
@@ -248,8 +248,8 @@ dataset9 = dict(
     type='YTModalDataset',
     dataset=dict(
         type='TDODDataset',
-        data_root='toist_data/images',
-        ann_file='/data/lisq2309/YOTO/toist_data/coco-tasks/annotations/task_9_train.json',
+        data_root='data/data/images',
+        ann_file='/data/lisq2309/YOTO/data/data/coco-tasks/annotations/task_9_train.json',
         data_prefix=dict(img='train2014/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/toist9.json',
@@ -260,8 +260,8 @@ dataset10 = dict(
     type='YTModalDataset',
     dataset=dict(
         type='TDODDataset',
-        data_root='toist_data/images',
-        ann_file='/data/lisq2309/YOTO/toist_data/coco-tasks/annotations/task_10_train.json',
+        data_root='data/data/images',
+        ann_file='/data/lisq2309/YOTO/data/data/coco-tasks/annotations/task_10_train.json',
         data_prefix=dict(img='train2014/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/toist10.json',
@@ -272,8 +272,8 @@ dataset11 = dict(
     type='YTModalDataset',
     dataset=dict(
         type='TDODDataset',
-        data_root='toist_data/images',
-        ann_file='/data/lisq2309/YOTO/toist_data/coco-tasks/annotations/task_11_train.json',
+        data_root='data/data/images',
+        ann_file='/data/lisq2309/YOTO/data/data/coco-tasks/annotations/task_11_train.json',
         data_prefix=dict(img='train2014/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/toist11.json',
@@ -283,8 +283,8 @@ dataset12 = dict(
     type='YTModalDataset',
     dataset=dict(
         type='TDODDataset',
-        data_root='toist_data/images',
-        ann_file='/data/lisq2309/YOTO/toist_data/coco-tasks/annotations/task_12_train.json',
+        data_root='data/data/images',
+        ann_file='/data/lisq2309/YOTO/data/data/coco-tasks/annotations/task_12_train.json',
         data_prefix=dict(img='train2014/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/toist10.json',
@@ -295,8 +295,8 @@ dataset13 = dict(
     type='YTModalDataset',
     dataset=dict(
         type='TDODDataset',
-        data_root='toist_data/images',
-        ann_file='/data/lisq2309/YOTO/toist_data/coco-tasks/annotations/task_13_train.json',
+        data_root='data/data/images',
+        ann_file='/data/lisq2309/YOTO/data/data/coco-tasks/annotations/task_13_train.json',
         data_prefix=dict(img='train2014/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/toist13.json',
@@ -307,8 +307,8 @@ dataset14 = dict(
     type='YTModalDataset',
     dataset=dict(
         type='TDODDataset',
-        data_root='toist_data/images',
-        ann_file='/data/lisq2309/YOTO/toist_data/coco-tasks/annotations/task_14_train.json',
+        data_root='data/data/images',
+        ann_file='/data/lisq2309/YOTO/data/data/coco-tasks/annotations/task_14_train.json',
         data_prefix=dict(img='train2014/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/toist14.json',
@@ -340,8 +340,8 @@ coco_val_dataset = dict(
     type='YTModalDataset',
     dataset=dict(
         type='TDODDataset',
-         data_root='toist_data/images',
-        ann_file='/data/lisq2309/YOTO/toist_data/coco-tasks/annotations/task_4_test.json',
+         data_root='data/data/images',
+        ann_file='/data/lisq2309/YOTO/data/data/coco-tasks/annotations/task_4_test.json',
         data_prefix=dict(img='val2014/'),
         filter_cfg=dict(filter_empty_gt=False, min_size=32)),
     class_text_path='data/texts/toist4.json',
@@ -394,7 +394,7 @@ val_evaluator = dict(
     _delete_=True,
     type='SimpleAccuracy',
     proposal_nums=(100, 1, 10),
-    ann_file='/data/lisq2309/YOTO/toist_data/coco-tasks/annotations/task_4_test.json',
+    ann_file='/data/lisq2309/YOTO/data/data/coco-tasks/annotations/task_4_test.json',
     metric='bbox')
 
 test_evaluator=val_evaluator

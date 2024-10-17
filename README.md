@@ -23,18 +23,21 @@ Please follow the instructions in [the official website](https://github.com/coco
 
 You can organize the 'data' folder as follows:
 ```
-data/
-  ├── id2name.json
-  ├── images/
-  │    ├── train2014/
-  │    └── val2014/
-  └── coco-tasks/
-       └── annotations/
-            ├── task_1_train.json
-            ├── task_1_test.json
-            ...
-            ├── task_14_train.json
-            └── task_14_test.json
+  data/
+    ├──texts/
+    └──data/
+        ├── id2name.json
+        ├── images/
+        │    ├── train2014/
+        │    └── val2014/
+        └── coco-tasks/
+            └── annotations/
+                    ├── task_1_train.json
+                    ├── task_1_test.json
+                    ...
+                    ├── task_14_train.json
+                    └── task_14_test.json
+
 ```
 Then set the arguments `coco_path`, `refexp_ann_path` and `catid2name_path` in file `configs/tdod.json` to be the path of `data/images/`, `data/coco-tasks/annotations/` and `data/id2name.json`, respectively.
 
