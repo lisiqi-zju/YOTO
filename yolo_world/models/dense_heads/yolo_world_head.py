@@ -16,8 +16,8 @@ from mmengine.dist import get_dist_info
 from mmengine.structures import InstanceData
 from mmdet.structures import SampleList
 from mmdet.utils import OptConfigType, InstanceList, OptInstanceList
-from mmdet.models.utils import (multi_apply, unpack_gt_instances,
-                                filter_scores_and_topk)
+# from mmdet.models.utils import (multi_apply, unpack_gt_instances,filter_scores_and_topk)
+from mmdet.models.utils import (multi_apply, unpack_gt_instances)
 from mmyolo.registry import MODELS
 from mmyolo.models.dense_heads import YOLOv8HeadModule, YOLOv8Head
 from mmyolo.models.utils import gt_instances_preprocess
@@ -561,6 +561,8 @@ class YOLOWorldHead(YOLOv8Head):
                     loss_bbox=loss_bbox * num_imgs * world_size,
                     loss_dfl=loss_dfl * num_imgs * world_size)
 
+
+
     def predict_by_feat(self,
                         cls_scores: List[Tensor],
                         bbox_preds: List[Tensor],
@@ -646,8 +648,17 @@ class YOLOWorldHead(YOLOv8Head):
             for bbox_pred in bbox_preds
         ]
 
-        flatten_cls_scores = torch.cat(flatten_cls_scores, dim=1).sigmoid()
+        a=torch.cat(flatten_cls_scores, dim=1)
+        a_max=torch.max(a)
+        a_min=torch.min(a)
+        flatten_cls_scores = torch.cat(flatten_cls_scores, dim=1).sigmoid()#1 8400 1
+        b_max=torch.max(flatten_cls_scores)
+        b_min=torch.min(flatten_cls_scores)
+
+
         flatten_bbox_preds = torch.cat(flatten_bbox_preds, dim=1)
+
+        
         flatten_decoded_bboxes = self.bbox_coder.decode(
             flatten_priors[None], flatten_bbox_preds, flatten_stride)
 
@@ -732,3 +743,51 @@ class YOLOWorldHead(YOLOv8Head):
 
             results_list.append(results)
         return results_list
+
+def filter_scores_and_topk(scores, score_thr, topk, results=None):
+        """Filter results using score threshold and topk candidates.
+
+        Args:
+            scores (Tensor): The scores, shape (num_bboxes, K).
+            score_thr (float): The score filter threshold.
+            topk (int): The number of topk candidates.
+            results (dict or list or Tensor, Optional): The results to
+            which the filtering rule is to be applied. The shape
+            of each item is (num_bboxes, N).
+
+        Returns:
+            tuple: Filtered results
+
+                - scores (Tensor): The scores after being filtered, \
+                    shape (num_bboxes_filtered, ).
+                - labels (Tensor): The class labels, shape \
+                    (num_bboxes_filtered, ).
+                - anchor_idxs (Tensor): The anchor indexes, shape \
+                    (num_bboxes_filtered, ).
+                - filtered_results (dict or list or Tensor, Optional): \
+                    The filtered results. The shape of each item is \
+                    (num_bboxes_filtered, N).
+        """
+        valid_mask = scores > score_thr
+        scores = scores[valid_mask]
+        valid_idxs = torch.nonzero(valid_mask)
+
+        num_topk = min(topk, valid_idxs.size(0))
+        # torch.sort is actually faster than .topk (at least on GPUs)
+        scores, idxs = scores.sort(descending=True)
+        scores = scores[:num_topk]
+        topk_idxs = valid_idxs[idxs[:num_topk]]
+        keep_idxs, labels = topk_idxs.unbind(dim=1)
+
+        filtered_results = None
+        if results is not None:
+            if isinstance(results, dict):
+                filtered_results = {k: v[keep_idxs] for k, v in results.items()}
+            elif isinstance(results, list):
+                filtered_results = [result[keep_idxs] for result in results]
+            elif isinstance(results, torch.Tensor):
+                filtered_results = results[keep_idxs]
+            else:
+                raise NotImplementedError(f'Only supports dict or list or Tensor, '
+                                        f'but get {type(results)}.')
+        return scores, labels, keep_idxs, filtered_results

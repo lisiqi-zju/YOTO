@@ -44,7 +44,7 @@ def parse_args():
         choices=['none', 'pytorch', 'slurm', 'mpi'],
         default='none',
         help='job launcher')
-    parser.add_argument('--local_rank', type=int, default=0)
+    parser.add_argument('--local-rank', type=int, default=0)
     args = parser.parse_args()
     if 'LOCAL_RANK' not in os.environ:
         os.environ['LOCAL_RANK'] = str(args.local_rank)
@@ -102,7 +102,6 @@ def main():
 
     # Determine whether the custom metainfo fields are all lowercase
     is_metainfo_lower(cfg)
-
     # build the runner from config
     if 'runner_type' not in cfg:
         # build the default runner
@@ -112,6 +111,7 @@ def main():
         # if 'runner_type' is set in the cfg
         runner = RUNNERS.build(cfg)
 
+    runner.model.find_unused_parameters=True
     # start training
     runner.train()
 

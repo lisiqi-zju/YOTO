@@ -27,9 +27,11 @@ class YOLOWorldDetector(YOLODetector):
              batch_data_samples: SampleList) -> Union[dict, list]:
         """Calculate losses from a batch of inputs and data samples."""
         self.bbox_head.num_classes = self.num_train_classes
+        # with torch.no_grad():
         img_feats, txt_feats = self.extract_feat(batch_inputs,
-                                                 batch_data_samples)
+                                                batch_data_samples)
         losses = self.bbox_head.loss(img_feats, txt_feats, batch_data_samples)
+
         return losses
 
     def predict(self,
