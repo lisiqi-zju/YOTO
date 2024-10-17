@@ -64,3 +64,25 @@ Evaluating YOTO is also easy:
 chmod +x tools/dist_test.sh
 ./tools/dist_test.sh configs/YOTO.py path/to/weights 8
 ```
+
+#### Image Demo
+
+We provide a simple image demo for inference on images with visualization outputs.
+
+```bash
+python demo/image_demo.py path/to/config path/to/weights image/path/directory 'person,dog,cat' --topk 100 --threshold 0.005 --output-dir demo_outputs
+```
+
+**Notes:**
+* The `image` can be a directory or a single image.
+* The `texts` can be a string of categories (noun phrases) which is separated by a comma. We also support `txt` file in which each line contains a category ( noun phrases).
+* The `topk` and `threshold` control the number of predictions and the confidence threshold.
+
+
+#### Video Demo
+
+The `video_demo` has similar hyper-parameters with `image_demo`.
+
+```bash
+python demo/video_demo.py path/to/config path/to/weights video_path 'person,dog' --out out_video_path
+```
