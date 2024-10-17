@@ -10,273 +10,6 @@ from mmdet.utils import ConfigType, OptConfigType, OptMultiConfig
 from .kmeans import kmeans
 from .kmeans import kmeans_predict
 
-
-
-@MODELS.register_module()
-class YOLOTOIST(BaseDetector):
-
-    def __init__(self,
-                backbone: ConfigType,
-                neck: ConfigType,
-                bbox_head: ConfigType,
-                train_cfg: OptConfigType = None,
-                test_cfg: OptConfigType = None,
-                data_preprocessor: OptConfigType = None,
-                init_cfg: OptMultiConfig = None,
-                use_syncbn: bool = True,
-                mm_neck: bool = False,
-                num_train_classes=80,
-                num_test_classes=80) -> None:
-  
-        self.mm_neck = mm_neck
-        self.num_train_classes = num_train_classes
-        self.num_test_classes = num_test_classes
-        super().__init__(
-            data_preprocessor=data_preprocessor, init_cfg=init_cfg)
-        self.backbone = MODELS.build(backbone)
-        if neck is not None:
-            self.neck = MODELS.build(neck)
-        bbox_head.update(train_cfg=train_cfg)
-        bbox_head.update(test_cfg=test_cfg)
-        self.bbox_head = MODELS.build(bbox_head)
-        self.train_cfg = train_cfg
-        self.test_cfg = test_cfg
-        
-
-    def _load_from_state_dict(self, state_dict: dict, prefix: str,
-                            local_metadata: dict, strict: bool,
-                            missing_keys: Union[List[str], str],
-                            unexpected_keys: Union[List[str], str],
-                            error_msgs: Union[List[str], str]) -> None:
-        """Exchange bbox_head key to rpn_head key when loading two-stage
-        weights into single-stage model."""
-        bbox_head_prefix = prefix + '.bbox_head' if prefix else 'bbox_head'
-        bbox_head_keys = [
-            k for k in state_dict.keys() if k.startswith(bbox_head_prefix)
-        ]
-        rpn_head_prefix = prefix + '.rpn_head' if prefix else 'rpn_head'
-        rpn_head_keys = [
-            k for k in state_dict.keys() if k.startswith(rpn_head_prefix)
-        ]
-        if len(bbox_head_keys) == 0 and len(rpn_head_keys) != 0:
-            for rpn_head_key in rpn_head_keys:
-                bbox_head_key = bbox_head_prefix + \
-                                rpn_head_key[len(rpn_head_prefix):]
-                state_dict[bbox_head_key] = state_dict.pop(rpn_head_key)
-        super()._load_from_state_dict(state_dict, prefix, local_metadata,
-                                      strict, missing_keys, unexpected_keys,
-                                      error_msgs)
-
-    def loss(self, batch_inputs: Tensor,
-             batch_data_samples: SampleList) -> Union[dict, list]:
-        """Calculate losses from a batch of inputs and data samples."""
-        self.bbox_head.num_classes = self.num_train_classes
-        img_feats, txt_feats = self.extract_feat(batch_inputs,
-                                                 batch_data_samples)
-        losses = self.bbox_head.loss(img_feats, txt_feats, batch_data_samples)
-        return losses
-
-
-    def predict(self,
-                batch_inputs: Tensor,
-                batch_data_samples: SampleList,
-                rescale: bool = True) -> SampleList:
-        """Predict results from a batch of inputs and data samples with post-
-        processing.
-        """
-
-        img_feats, txt_feats = self.extract_feat(batch_inputs,
-                                                 batch_data_samples)
-
-        # self.bbox_head.num_classes = self.num_test_classes
-        self.bbox_head.num_classes = txt_feats[0].shape[0]
-        results_list = self.bbox_head.predict(img_feats,
-                                              txt_feats,
-                                              batch_data_samples,
-                                              rescale=rescale)
-
-        batch_data_samples = self.add_pred_to_datasample(
-            batch_data_samples, results_list)
-        return batch_data_samples
-
-
-    def _forward(
-            self,
-            batch_inputs: Tensor,
-            batch_data_samples: OptSampleList = None) -> Tuple[List[Tensor]]:
-        """Network forward process. Usually includes backbone, neck and head
-        forward without any post-processing.
-        """
-        img_feats, txt_feats = self.extract_feat(batch_inputs,
-                                                 batch_data_samples)
-        results = self.bbox_head.forward(img_feats, txt_feats)
-        return results
-
-
-    def extract_feat(
-            self, batch_inputs: Tensor,
-            batch_data_samples: SampleList) -> Tuple[Tuple[Tensor], Tensor]:
-        """Extract features."""
-        txt_feats = None
-        if batch_data_samples is None:
-            texts = self.texts
-            txt_feats = self.text_feats
-        elif isinstance(batch_data_samples,
-                        dict) and 'texts' in batch_data_samples:
-            texts = batch_data_samples['texts']
-        elif isinstance(batch_data_samples, list) and hasattr(
-                batch_data_samples[0], 'texts'):
-            texts = [data_sample.texts for data_sample in batch_data_samples]
-        elif hasattr(self, 'text_feats'):
-            texts = self.texts
-            txt_feats = self.text_feats
-        else:
-            raise TypeError('batch_data_samples should be dict or list.')
-        if txt_feats is not None:
-            # forward image only
-            img_feats = self.backbone.forward_image(batch_inputs)
-        else:
-            img_feats, txt_feats = self.backbone(batch_inputs, texts)
-        if self.with_neck:
-            if self.mm_neck:
-                img_feats = self.neck(img_feats, txt_feats)
-            else:
-                img_feats = self.neck(img_feats)
-        return img_feats, txt_feats
-
-
-@MODELS.register_module()
-class YTTeacher(BaseDetector):
-
-    def __init__(self,
-                backbone: ConfigType,
-                neck: ConfigType,
-                bbox_head: ConfigType,
-                coco_path,
-                train_cfg: OptConfigType = None,
-                test_cfg: OptConfigType = None,
-                data_preprocessor: OptConfigType = None,
-                init_cfg: OptMultiConfig = None,
-                use_syncbn: bool = True,
-                mm_neck: bool = False,
-                num_train_classes=80,
-                num_test_classes=80) -> None:
-  
-        self.mm_neck = mm_neck
-        self.num_train_classes = num_train_classes
-        self.num_test_classes = num_test_classes
-        super().__init__(
-            data_preprocessor=data_preprocessor, init_cfg=init_cfg)
-        
-        # backbone['frozen_stages']=4
-        # neck['freeze_all']=True
-        # bbox_head['head_module']['freeze_all']=True
-
-        self.backbone = MODELS.build(backbone)
-        if neck is not None:
-            self.neck = MODELS.build(neck)
-        bbox_head.update(train_cfg=train_cfg)
-        bbox_head.update(test_cfg=test_cfg)
-        self.bbox_head = MODELS.build(bbox_head)
-
-
-
-        self.train_cfg = train_cfg
-        self.test_cfg = test_cfg
-
-    def loss(self, batch_inputs: Tensor,
-             batch_data_samples: SampleList) -> Union[dict, list]:
-        """Calculate losses from a batch of inputs and data samples."""
-
-        self.bbox_head.num_classes = self.num_train_classes
-        coco_batch_data_samples = batch_data_samples
-        for i in range(len(coco_batch_data_samples['coco_texts'])):
-            coco_batch_data_samples['texts'][i] = ['chair']
-        # coco_batch_data_samples['bboxes_labels']=batch_data_samples['coco_bboxes_labels']
-        # coco_batch_data_samples['texts']=batch_data_samples['coco_texts']
-        img_feats, txt_feats = self.extract_feat(batch_inputs,
-                                                 coco_batch_data_samples)
-        losses = self.bbox_head.loss(img_feats, txt_feats, coco_batch_data_samples)
-        # losses['loss_cls'] *=0
-        # losses['loss_bbox'] *=0
-        # losses['loss_dfl'] *=0
-        return losses
-
-    def predict(self,
-                batch_inputs: Tensor,
-                batch_data_samples: SampleList,
-                rescale: bool = True) -> SampleList:
-        """Predict results from a batch of inputs and data samples with post-
-        processing.
-        """
-
-        # coco_batch_data_samples = batch_data_samples
-        # coco_batch_data_samples['bboxes_labels']=batch_data_samples['coco_bboxes_labels']
-        # coco_batch_data_samples['texts']=batch_data_samples['coco_texts']
-
-        batch_data_samples[0].set_metainfo(dict(texts = ['chair']))
-        # for i in range(len(batch_data_samples['coco_texts'])):
-        #     batch_data_samples['texts'][i] = ['chair']
-
-        img_feats, txt_feats = self.extract_feat(batch_inputs,
-                                                 batch_data_samples)
-
-        # self.bbox_head.num_classes = self.num_test_classes
-        self.bbox_head.num_classes = txt_feats[0].shape[0]
-        results_list = self.bbox_head.predict(img_feats,
-                                              txt_feats,
-                                              batch_data_samples,
-                                              rescale=rescale)
-
-        batch_data_samples = self.add_pred_to_datasample(
-            batch_data_samples, results_list)
-        return batch_data_samples
-
-
-    def _forward(
-            self,
-            batch_inputs: Tensor,
-            batch_data_samples: OptSampleList = None) -> Tuple[List[Tensor]]:
-        """Network forward process. Usually includes backbone, neck and head
-        forward without any post-processing.
-        """
-        img_feats, txt_feats = self.extract_feat(batch_inputs,
-                                                 batch_data_samples)
-        results = self.bbox_head.forward(img_feats, txt_feats)
-        return results
-
-
-    def extract_feat(
-            self, batch_inputs: Tensor,
-            batch_data_samples: SampleList) -> Tuple[Tuple[Tensor], Tensor]:
-        """Extract features."""
-        txt_feats = None
-        if batch_data_samples is None:
-            texts = self.texts
-            txt_feats = self.text_feats
-        elif isinstance(batch_data_samples,
-                        dict) and 'texts' in batch_data_samples:
-            texts = batch_data_samples['texts']
-        elif isinstance(batch_data_samples, list) and hasattr(
-                batch_data_samples[0], 'texts'):
-            texts = [data_sample.texts for data_sample in batch_data_samples]
-        elif hasattr(self, 'text_feats'):
-            texts = self.texts
-            txt_feats = self.text_feats
-        else:
-            raise TypeError('batch_data_samples should be dict or list.')
-        if txt_feats is not None:
-            # forward image only
-            img_feats = self.backbone.forward_image(batch_inputs)
-        else:
-            img_feats, txt_feats = self.backbone(batch_inputs, texts)
-        if self.with_neck:
-            if self.mm_neck:
-                img_feats = self.neck(img_feats, txt_feats)
-            else:
-                img_feats = self.neck(img_feats)
-        return img_feats, txt_feats
-
 import copy
 import torch.nn.functional as F
 import time  
@@ -369,7 +102,7 @@ coco_categories = {
 
 @MODELS.register_module()
 
-class DistillModel(BaseDetector):
+class YOTODetector(BaseDetector):
 
     def __init__(self,
             backbone: ConfigType,
@@ -419,33 +152,7 @@ class DistillModel(BaseDetector):
         self.predict_load_flag=False
         
         self.coco_path='pretrained_models/yolo_world_v2_s_vlpan_bn_2e-4_80e_8gpus_mask-refine_finetune_coco_ep80-492dc329.pth'
-        # state_dict = torch.load(coco_path)
-
-        # backbone_state_dict = {k.replace('backbone.', '') : v for k, v in state_dict['state_dict'].items() if k.startswith('backbone.')}  
-        # self.backbone_teacher.load_state_dict(backbone_state_dict)
-
-        # neck_state_dict = {k.replace('neck.', '') : v for k, v in state_dict['state_dict'].items() if k.startswith('neck.')}  
-        # self.neck_teacher.load_state_dict(neck_state_dict)
-
-        # bbox_head_state_dict = {k.replace('bbox_head.', '') : v for k, v in state_dict['state_dict'].items() if k.startswith('bbox_head.')}  
-        # self.bbox_head_teacher.load_state_dict(bbox_head_state_dict)
-
-        # cp_path='/data/lisq2309/YT/41.3.pth'
-        # state_dict = torch.load(cp_path)
-        # backbone_state_dict = {k.replace('backbone.', '') : v for k, v in state_dict['state_dict'].items() if k.startswith('backbone.')}  
-        # self.backbone.load_state_dict(backbone_state_dict)
-
-        # neck_state_dict = {k.replace('neck.', '') : v for k, v in state_dict['state_dict'].items() if k.startswith('neck.')}  
-        # self.neck.load_state_dict(neck_state_dict)
-
-        # bbox_head_state_dict = {k.replace('bbox_head.', '') : v for k, v in state_dict['state_dict'].items() if k.startswith('bbox_head.')}  
-        # self.bbox_head.load_state_dict(bbox_head_state_dict)
-
         
-
-        self.memory_bank0=[]
-        self.memory_bank1=[]
-        self.memory_bank2=[]
 
     def get_coco_text(self, bboxes_labels,batch_size):
         
@@ -492,14 +199,7 @@ class DistillModel(BaseDetector):
         img_feats, txt_feats = self.extract_feat(batch_inputs,
                                                  batch_data_samples)
         
-        # img_feats_clone=(img_feats[0].clone(),img_feats[1].clone(),img_feats[2].clone())
-        # txt_feats_clone=txt_feats.clone()
-
-        # img_feats_clone=img_feats
-        # txt_feats_clone=txt_feats
-
-
-        losses = self.bbox_head.loss(img_feats, txt_feats, batch_data_samples)
+        # losses = self.bbox_head.loss(img_feats, txt_feats, batch_data_samples)
 
 
         if len(coco_texts[0])!=0:
@@ -541,55 +241,11 @@ class DistillModel(BaseDetector):
         cluster_center_feature2 = new_cluster_centers[cluster_center_choice]
 
 
-        # tensor_list=[a.unsqueeze(0) for a in self.memory_bank1 ]
-        # concatenated_tensor = torch.cat(tensor_list, dim=0) 
-        # _,new_cluster_centers=kmeans(concatenated_tensor,None,1,device=concatenated_tensor.device)
-        # cluster_ids_y = kmeans_predict(concatenated_tensor, new_cluster_centers, 'euclidean', device=concatenated_tensor.device)
-        # cluster_center_choice = cluster_ids_y[0]
-        # cluster_center_feature1 = new_cluster_centers[cluster_center_choice]
-
-        # tensor_list=[a.unsqueeze(0) for a in self.memory_bank2 ]
-        # concatenated_tensor = torch.cat(tensor_list, dim=0) 
-        # _,new_cluster_centers=kmeans(concatenated_tensor,None,1,device=concatenated_tensor.device)
-        # cluster_ids_y = kmeans_predict(concatenated_tensor, new_cluster_centers, 'euclidean', device=concatenated_tensor.device)
-        # cluster_center_choice = cluster_ids_y[0]
-        # cluster_center_feature2 = new_cluster_centers[cluster_center_choice]
-
         cluster_feats=(cluster_center_feature0,cluster_center_feature1,cluster_center_feature2)
         losses = self.bbox_head.loss(cluster_feats, txt_feats, batch_data_samples)
 
-            # for _,key in enumerate(losses):
-            #     losses[key]+=cluster_loss[key]
-        # else:
-        # losses = self.bbox_head.loss(img_feats, txt_feats, batch_data_samples)
-
         ################################################
         
-        
-
-
-
-
-        # for i,text in enumerate(coco_texts[0]):
-        #     for j in range(len(coco_batch_data_samples['coco_texts'])):
-        #         coco_batch_data_samples['texts'][j] = [text]
-
-        #     img_feats_teacher, txt_feats_teacher = self.teacher_extract_feat(batch_inputs,
-        #                                         coco_batch_data_samples)
-        #     if  i==0:
-        #         kl_loss=self.distill_loss(img_feats[0],img_feats_teacher[0])
-        #     else:
-        #         kl_loss+=self.distill_loss(img_feats[0],img_feats_teacher[0])
-        #     kl_loss+=self.distill_loss(img_feats[1],img_feats_teacher[1])
-        #     kl_loss+=self.distill_loss(img_feats[2],img_feats_teacher[2])
-            
-        
-        
-        # losses_teacher = self.bbox_head.loss(img_feats_teacher, txt_feats_teacher, coco_batch_data_samples)
-
-
-
-
 
         kl_loss=self.distill_loss(img_feats[0],img_feats_teacher[0])
         kl_loss+=self.distill_loss(img_feats[1],img_feats_teacher[1])
@@ -772,16 +428,3 @@ class DistillModel(BaseDetector):
                                                  batch_data_samples)
         results = self.bbox_head.forward(img_feats, txt_feats)
         return results
-
-
-
-# def memory_cluster(feature_to_cluster):
-#     memory_feature=feature_to_cluster
-#     new_cluster_centers=kmeans(memory_feature,None,3)
-#     cluster_ids_y = kmeans_predict(
-#             feature_to_cluster.reshape(1,-1), new_cluster_centers, 'euclidean', device=new_cluster_centers.device)
-    
-#     cluster_center_choice = cluster_ids_y[0]
-#     cluster_center_feature = new_cluster_centers[cluster_center_choice]
-
-#     return cluster_center_choice, cluster_center_feature

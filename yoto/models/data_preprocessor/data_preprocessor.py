@@ -4,7 +4,7 @@ from mmdet.models.data_preprocessors import DetDataPreprocessor
 from mmyolo.registry import MODELS
 
 @MODELS.register_module()
-class YTDataPreprocessor(DetDataPreprocessor):
+class YOTODataPreprocessor(DetDataPreprocessor):
     """Rewrite collate_fn to get faster training speed.
 
     Note: It must be used together with `mmyolo.datasets.utils.yolow_collate`
